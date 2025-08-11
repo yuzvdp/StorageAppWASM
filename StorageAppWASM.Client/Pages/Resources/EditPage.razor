@@ -1,0 +1,50 @@
+﻿@page "/resources/edit/{id:int}"
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+@inject NavigationManager Nv
+@inject HttpClient Http
+@using ClassLibrary.Dto
+
+<h3>Редактировать ресурс</h3>
+
+@if (resourceDto != null)
+{
+    <EditForm Model="@resourceDto" OnValidSubmit="@Save" FormName="starship_fluent_entry" novalidate>
+        <DataAnnotationsValidator />
+        @* <FluentValidationSummary /> *@
+        <FluentStack Orientation="Orientation.Vertical">
+            <div>
+                <FluentTextField Name="Title" @bind-Value="resourceDto.Title" Label="Наименование" Required />
+                <FluentValidationMessage For="@(() => resourceDto.Title)" />
+            </div>
+            <div>
+                <FluentCheckbox Name="IsActive" @bind-Value="resourceDto.IsActive" Label="Активный?" Required />
+                <FluentValidationMessage For="@(() => resourceDto.IsActive)" />
+            </div>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Сохранить</FluentButton>
+            <FluentButton onclick="@(() => Nv.NavigateTo("/resources"))">Отмена</FluentButton>
+        </FluentStack>
+    </EditForm>
+}
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    ResourceDto resourceDto = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetResource();
+    }
+
+    async Task GetResource()
+    {
+        resourceDto = await Http.GetFromJsonAsync<ResourceDto>($"api/resources/getbyid/{Id}");
+    }
+
+    async Task Save()
+    {
+        await Http.PutAsJsonAsync($"api/resources/{resourceDto.Id}", resourceDto);
+
+        Nv.NavigateTo("/resources");
+    }
+}

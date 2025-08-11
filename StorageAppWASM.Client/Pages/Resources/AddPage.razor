@@ -1,0 +1,31 @@
+﻿@page "/resources/add"
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+@inject NavigationManager Nv
+@inject HttpClient Http
+@using ClassLibrary.Dto
+
+<h3>Добавить ресурс</h3>
+
+<EditForm Model="@resourceInsertDto" OnValidSubmit="@Save" FormName="starship_fluent_entry" novalidate>
+    <DataAnnotationsValidator />
+    @* <FluentValidationSummary /> *@
+    <FluentStack Orientation="Orientation.Vertical">
+        <div>
+            <FluentTextField Name="Title" @bind-Value="resourceInsertDto.Title" Label="Наименование" Required />
+            <FluentValidationMessage For="@(() => resourceInsertDto.Title)" />
+        </div>                        
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Сохранить</FluentButton>
+    </FluentStack>
+</EditForm>
+
+@code {   
+    ResourceInsertDto resourceInsertDto = new();
+
+    async Task Save()
+    {
+        await Http.PostAsJsonAsync("api/resources", resourceInsertDto);
+
+        Nv.NavigateTo("/resources");
+    }
+}

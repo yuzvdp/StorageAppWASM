@@ -1,0 +1,61 @@
+﻿@page "/resources"
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+@inject NavigationManager Nv
+@inject HttpClient Http
+@using ClassLibrary.Dto
+
+
+<h3>Ресурсы</h3>
+
+<FluentButton OnClick="SimulateDataLoading">Загрузить данные</FluentButton>
+<FluentButton OnClick=@(() => Nv.NavigateTo("/resources/add"))>Добавить</FluentButton>
+
+<div style="height: 400px; max-width: 800px; overflow-y: scroll;">
+    <FluentDataGrid Items="@resources" Virtualize="true" @ref="grid" Loading="@(resources == null)" TGridItem="ResourceDto" OnCellClick="@HandleCellClick">
+        <ChildContent>
+            <PropertyColumn Property="@(p => p.Title)" Title="Наименование" Sortable="true" />
+            <PropertyColumn Property="@(p => p.IsActive)" Sortable="true" />
+        </ChildContent>    
+        <LoadingContent>
+            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+                Загрузка...<br />
+                <FluentProgress Width="150px" />
+            </FluentStack>
+        </LoadingContent>
+    </FluentDataGrid>
+</div>
+
+
+@code {
+    private IQueryable<ResourceDto>? resources;
+    FluentDataGrid<ResourceDto>? grid;
+
+    protected override async Task OnInitializedAsync()
+    {        
+        await SimulateDataLoading();
+    }
+
+    private async Task SimulateDataLoading()
+    {        
+        resources = null;
+
+        grid?.SetLoadingState(true);
+
+        //await Task.Delay(500);
+
+        var items = await Http.GetFromJsonAsync<IEnumerable<ResourceDto>>("api/resources");
+
+        resources = items?.AsQueryable().OrderBy(x => x.Id);
+
+        grid?.SetLoadingState(false);
+    }
+
+    private void HandleCellClick(FluentDataGridCell<ResourceDto> cell)
+    {       
+        Nv.NavigateTo($"/resources/edit/{cell.Item.Id}");
+        // Access the clicked item: args.Item
+        // Access the clicked column: args.GridColumn
+        // Perform actions based on the clicked cell/row
+    }
+}
