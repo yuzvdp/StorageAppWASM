@@ -1,8 +1,83 @@
 ﻿@page "/units"
 @rendermode @(new InteractiveWebAssemblyRenderMode(false))
 
-<h3>UnitsPage</h3>
+@inject NavigationManager Nv
+@inject HttpClient Http
+@inject IDialogService DialogService
+@using ClassLibrary.Dto
+
+<h3>Ед. изм.</h3>
+
+<FluentButton OnClick=@(() => Nv.NavigateTo("/units/add")) Appearance="Appearance.Accent">Добавить</FluentButton>
+<FluentButton OnClick=@(async () => await ShowActive(IsActive))>@((IsActive) ? "Показать архив" : "Показать активные")</FluentButton>
+<FluentButton OnClick=@(async () => await GetAll()) Appearance="Appearance.Stealth">Показать все</FluentButton>
+
+@if (units != null)
+{
+    <div class="w-50 mt-2">
+        <table class="table table-sm table-hover table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <td>Наименование</td>
+                    <td>Статус</td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var unit in units)
+                {
+                    <tr @onclick=@(() => HandleCellClick(unit.Id)) data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                        <td>@unit.Title</td> 
+                        <td>
+                            @if (unit.IsActive)
+                            {
+                                <span class="badge bg-success">Активный</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">В архиве</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div>Загрузка...</div>
+}
 
 @code {
+    private IQueryable<UnitDto>? units;
+    FluentDataGrid<UnitDto>? grid;
+    private bool IsActive = true; 
 
+    protected override async Task OnInitializedAsync()
+    {
+        await GetData(true);
+    }
+
+    private async Task GetData(bool b)
+    {
+        var items = await Http.GetFromJsonAsync<IEnumerable<UnitDto>>($"api/units/{IsActive}");
+        units = items?.AsQueryable().OrderBy(x => x.Id);
+    }
+
+    private async Task GetAll()
+    {
+        var items = await Http.GetFromJsonAsync<IEnumerable<UnitDto>>($"api/units");
+        units = items?.AsQueryable().OrderBy(x => x.Id);
+    }
+
+    private async Task ShowActive(bool b)
+    {
+        IsActive = !IsActive;
+        await GetData(b);
+    }
+
+    private void HandleCellClick(int id)
+    {       
+        Nv.NavigateTo($"/units/edit/{id}");        
+    }    
 }

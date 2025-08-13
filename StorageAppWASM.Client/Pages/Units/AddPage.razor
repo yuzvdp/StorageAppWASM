@@ -1,0 +1,33 @@
+﻿@page "/units/add"
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+@inject NavigationManager Nv
+@inject HttpClient Http
+@using ClassLibrary.Dto
+
+<h3>Добавить ед. измерения</h3>
+
+<EditForm Model="@unitInsertDto" OnValidSubmit="@Save" novalidate>
+    <DataAnnotationsValidator />
+    <FluentStack Orientation="Orientation.Vertical">
+        <div>
+            <FluentTextField Name="Title" @bind-Value="unitInsertDto.Title" Label="Наименование" Required />
+            <FluentValidationMessage For="@(() => unitInsertDto.Title)" />
+        </div>               
+        <FluentStack Orientation="Orientation.Horizontal">
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Сохранить</FluentButton>
+            <FluentButton onclick="@(() => Nv.NavigateTo("/units"))">Отмена</FluentButton>
+        </FluentStack>
+    </FluentStack>
+</EditForm>
+
+@code {   
+    UnitInsertDto unitInsertDto = new();
+
+    async Task Save()
+    {
+        await Http.PostAsJsonAsync("api/units", unitInsertDto);
+
+        Nv.NavigateTo("/units");
+    }
+}

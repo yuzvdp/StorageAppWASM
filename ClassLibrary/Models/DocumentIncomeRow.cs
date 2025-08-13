@@ -9,6 +9,6 @@
         public Unit? Unit { get; set; }
         public int DocumentIncomeId { get; set; }
         public DocumentIncome? DocumentIncome { get; set; }
-        public uint Count { get; set; }
+        public double Count { get; set; }
     }
 }

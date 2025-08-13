@@ -1,0 +1,156 @@
+﻿@page "/incomes/add"
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+@inject NavigationManager Nv
+@inject HttpClient Http
+@using ClassLibrary.Dto
+
+<h3>Добавить документ поступления</h3>
+
+<EditForm Model="@documentIncomeInsertDto" OnValidSubmit="@Save" novalidate>    
+    <DataAnnotationsValidator />
+    <FluentStack Orientation="Orientation.Vertical">        
+        <div>          
+            <FluentNumberField Name="Number" @bind-Value="documentIncomeInsertDto.Number" Label="Номер" Required />
+            <FluentValidationMessage For="@(() => documentIncomeInsertDto.Number)" />
+        </div>          
+        <div>
+            <FluentDatePicker Label="Дата" AriaLabel="To" @bind-Value="@SelectedValue" />            
+        </div>      
+        <div style="margin: 10px 10px 10px 0px">
+            <FluentButton OnClick=AddRow>Добавить строку</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Сохранить</FluentButton>
+            <FluentButton OnClick=@(() => Nv.NavigateTo("/incomes/")) Appearance="Appearance.Stealth">Отмена</FluentButton>
+        </div>
+    </FluentStack>
+</EditForm>
+
+
+
+
+<table class="table table-sm table-hover table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <td>Ресурсы</td>
+            <td>Ед. изм.</td>
+            <td>Количество</td>
+            <td>Действия</td>
+        </tr>
+    </thead>
+    <tbody>
+        @if (documentIncomeInsertDto.DocumentIncomeRowDtos.Count > 0)
+        {
+            @foreach (var row in documentIncomeInsertDto.DocumentIncomeRowDtos)
+            {
+                <tr>
+                    <td>
+                        <select class="form-select" aria-label="Default select example" @bind=@row.ResourceId>                        
+                            @if(resources != null)
+                            {
+                                @foreach (var resource in resources)
+                                {
+                                    <option value=@resource.Id>@resource.Title</option> 
+                                }
+                               
+                            }                                                  
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select" aria-label="Default select example" @bind=@row.UnitId>                           
+                            @if (units != null)
+                            {
+                                @foreach (var unit in units)
+                                {
+                                    <option value=@unit.Id>@unit.Title</option>
+                                }
+                            }
+                        </select>
+                    </td>
+                <td>
+                    <input type="number" class="form-control" min="0" @bind=@row.Count/>
+
+                </td>
+                <td><button class="btn btn-sm btn-danger" @onclick=@(() => RemoveRow(row))>Удалить</button></td>
+            </tr>
+        }
+    }
+    else
+    {
+            <tr><td colspan="4">Нет данных</td></tr>
+    }
+    </tbody>
+</table>
+
+
+@code {
+    private DocumentIncomeInsertDto documentIncomeInsertDto = new();
+    DateTime dateTime = DateTime.Now;
+    private DateTime? SelectedValue = DateTime.Today;
+    private string ErrorMessage = string.Empty;
+    private IQueryable<DocumentIncomeRowDto>? rows;
+    FluentDataGrid<DocumentIncomeRowDto>? grid;
+
+    private IEnumerable<UnitDto>? units;    
+    private IEnumerable<ResourceDto>? resources;
+
+    private UnitDto firstUnit = new();
+    private ResourceDto firstResource = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        units = await Http.GetFromJsonAsync<IEnumerable<UnitDto>>("api/units");
+        resources = await Http.GetFromJsonAsync<IEnumerable<ResourceDto>>("api/resources");
+
+        firstUnit = units.First();
+        firstResource = resources.First();
+    }
+
+    void AddRow()
+    {
+        documentIncomeInsertDto.DocumentIncomeRowDtos.Add(new DocumentIncomeRowDto
+            {
+                UnitId = firstUnit.Id,
+                UnitTitle = firstUnit.Title,
+                ResourceId = firstResource.Id,
+                ResourceTitle = firstResource.Title,
+                Count = 0
+            });
+    }
+
+    void RemoveRow(DocumentIncomeRowDto row)
+    {
+        documentIncomeInsertDto.DocumentIncomeRowDtos.Remove(row);
+    }
+
+    async Task Save()
+    {                
+        try
+        {
+            dateTime = (DateTime)SelectedValue.Value;
+
+            documentIncomeInsertDto.Date = new DateOnly(dateTime.Year, dateTime.Month, dateTime.Day);
+
+            Console.WriteLine($"{documentIncomeInsertDto.Number}, {documentIncomeInsertDto.DocumentIncomeRowDtos.Count}");
+
+            foreach (var row in documentIncomeInsertDto.DocumentIncomeRowDtos)
+            {
+                Console.WriteLine($"{row.ResourceId}, {row.UnitId}");
+            }
+
+            var reply = await Http.PostAsJsonAsync("api/DocumentsIncome", documentIncomeInsertDto);
+
+            if (reply.IsSuccessStatusCode)
+            {
+                Nv.NavigateTo("/incomes");
+            }
+            else
+            {
+                ErrorMessage = "Ошибка! Возможно такой номер уже существует";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }                
+    }     
+}

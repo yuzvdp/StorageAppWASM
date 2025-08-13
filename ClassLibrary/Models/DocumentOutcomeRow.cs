@@ -7,6 +7,6 @@
         public Resource? Resource { get; set; }
         public int UnitId { get; set; }
         public Unit? Unit { get; set; }
-        public uint Count { get; set; }
+        public double Count { get; set; }
     }
 }

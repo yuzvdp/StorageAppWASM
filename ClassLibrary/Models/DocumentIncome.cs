@@ -5,6 +5,6 @@
         public int Id { get; set; }
         public int Number { get; set; }
         public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
-        List<DocumentIncomeRow>? Rows { get; set; } = [];
+        public List<DocumentIncomeRow>? DocumentIncomeRows { get; set; } = [];
     }
 }

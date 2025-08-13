@@ -22,13 +22,13 @@ namespace StorageAppWASM.Services.Implementation
                 {
                     Title = resourceInsertDto.Title,
                 };
-                await _resourceRepository.Add(newResource);
+                await _resourceRepository.AddAsync(newResource);
             }
         }
 
-        public async Task<ResourceDto> GetById(int id)
+        public async Task<ResourceDto> GetByIdAsync(int id)
         {
-            var item = await _resourceRepository.GetById(id);
+            var item = await _resourceRepository.GetByIdAsync(id);
             //if (item == null) return new ResourceDto();
 
             ResourceDto newResource = new()
@@ -38,12 +38,11 @@ namespace StorageAppWASM.Services.Implementation
                 IsActive = item.IsActive,
             };
             return newResource;
-
         }
 
-        public async Task<IEnumerable<ResourceDto>> GetResourcesAsync()
+        public async Task<IEnumerable<ResourceDto>> GetAllAsync()
         {
-            var resourceDtos = await _resourceRepository.GetAll();
+            var resourceDtos = await _resourceRepository.GetAllAsync();
             return from resourceDto in resourceDtos
                    select new ResourceDto
                    {
@@ -53,15 +52,27 @@ namespace StorageAppWASM.Services.Implementation
                    };
         }
 
-        public async Task Update(ResourceDto resourceDto)
+        public async Task UpdateAsync(ResourceDto resourceDto)
         {
-            var item = await _resourceRepository.GetById(resourceDto.Id);
+            var item = await _resourceRepository.GetByIdAsync(resourceDto.Id);
             if (item == null) return;
 
             item.Title = resourceDto.Title;
             item.IsActive = resourceDto.IsActive;
 
-            await _resourceRepository.Update(item);
+            await _resourceRepository.UpdateAsync(item);
+        }
+
+        public async Task<IEnumerable<ResourceDto>> GetAllIsActiveAsync(bool b)
+        {
+            var resourceDtos = await _resourceRepository.GetAllIsActiveAsync(b);
+            return from resourceDto in resourceDtos
+                   select new ResourceDto
+                   {
+                       Id = resourceDto.Id,
+                       Title = resourceDto.Title,
+                       IsActive = resourceDto.IsActive
+                   };
         }
     }
 }

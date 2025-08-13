@@ -1,5 +1,6 @@
 ﻿using ClassLibrary.Models;
 using Microsoft.EntityFrameworkCore;
+using ClassLibrary.Dto;
 
 namespace StorageAppWASM.Data
 {
@@ -26,5 +27,6 @@ namespace StorageAppWASM.Data
             modelBuilder.Entity<Resource>().HasIndex(u => new { u.Title }).IsUnique();
             modelBuilder.Entity<Unit>().HasIndex(u => new { u.Title }).IsUnique();
         }
+        public DbSet<ClassLibrary.Dto.BalanceDto> BalanceDto { get; set; } = default!;
     }
 }

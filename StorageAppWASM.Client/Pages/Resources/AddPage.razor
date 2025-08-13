@@ -7,15 +7,17 @@
 
 <h3>Добавить ресурс</h3>
 
-<EditForm Model="@resourceInsertDto" OnValidSubmit="@Save" FormName="starship_fluent_entry" novalidate>
-    <DataAnnotationsValidator />
-    @* <FluentValidationSummary /> *@
+<EditForm Model="@resourceInsertDto" OnValidSubmit="@Save" novalidate>
+    <DataAnnotationsValidator />   
     <FluentStack Orientation="Orientation.Vertical">
         <div>
             <FluentTextField Name="Title" @bind-Value="resourceInsertDto.Title" Label="Наименование" Required />
             <FluentValidationMessage For="@(() => resourceInsertDto.Title)" />
-        </div>                        
-        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Сохранить</FluentButton>
+        </div>                  
+        <FluentStack Orientation="Orientation.Horizontal">
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Сохранить</FluentButton>
+            <FluentButton onclick="@(() => Nv.NavigateTo("/resources"))">Отмена</FluentButton>
+        </FluentStack>
     </FluentStack>
 </EditForm>
 

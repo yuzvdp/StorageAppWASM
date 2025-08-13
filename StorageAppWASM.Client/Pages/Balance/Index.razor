@@ -1,8 +1,151 @@
 ﻿@page "/balances"
 @rendermode @(new InteractiveWebAssemblyRenderMode(false))
 
-<h3>BalancesPage</h3>
+@inject NavigationManager Nv
+@inject HttpClient Http
+@using ClassLibrary.Dto
+@using ClassLibrary.Filters
+
+<h3>Баланс</h3>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            @if (resources != null)
+            {
+                <div class="m-2">
+                    <FluentAutocomplete TOption="ResourceDto"
+                    AutoComplete="off"
+                    Autofocus="true"
+                    Label="Выберите ресурсы"
+                    Width="300px"
+                    MaxAutoHeight="200px"
+                    Placeholder="Выберите"
+                    OnOptionsSearch="@OnResourcesSearchAsync"
+                    MaximumSelectedOptions="10"
+                    OptionText="@(item => item.Title)"
+                    @bind-SelectedOptions="@selectedResources" />
+                </div>
+            }
+        </div>
+        <div class="col">
+            @if (units != null)
+            {
+                <div class="m-2">
+                    <FluentAutocomplete TOption="UnitDto"
+                    AutoComplete="off"
+                    Autofocus="true"
+                    Label="Выберите ед. изм."
+                    Width="300px"
+                    MaxAutoHeight="200px"
+                    Placeholder="Выберите"
+                    OnOptionsSearch="@OnUnitsSearchAsync"
+                    MaximumSelectedOptions="10"
+                    OptionText="@(item => item.Title)"
+                    @bind-SelectedOptions="@selectedUnits" />
+                </div>
+            }
+        </div>
+        <div class="col text-middle">
+            <div class="m-2">
+                <button class="btn btn-sm btn-success" @onclick=GetFiltered>Применить фильтр</button>
+                <button class="btn btn-sm btn-primary" @onclick=GetData>Отменить фильтр</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (balances != null)
+{
+    <table class="table table-sm table-hover table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <td>Ресурс</td>
+                <td>Ед. изм.</td>
+                <td>Количество</td>       
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var balance in balances)
+            {
+                <tr>
+                    <td>@balance.ResourceTitle</td>
+                    <td>@balance.UnitTitle</td>
+                    <td>@balance.Count</td>                    
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+else
+{
+    <div>Загрузка...</div>
+}
 
 @code {
+    private IQueryable<BalanceDto>? balances;
+    FluentDataGrid<BalanceDto>? grid;
+    private BalanceFilter filter = new();
+    private IEnumerable<ResourceDto>? resources;
+    private IEnumerable<UnitDto>? units;
+    private IEnumerable<ResourceDto>? selectedResources;
+    private IEnumerable<UnitDto>? selectedUnits;
 
+    protected override async Task OnInitializedAsync()
+    {        
+        await GetData();
+    }
+
+    private async Task GetFiltered()
+    {
+        balances = null;
+        filter.ResourceTitles.Clear();
+        filter.UnitTitles.Clear();
+
+        if (selectedResources != null)
+        {
+            if (selectedResources.Count() > 0)
+            {                
+                foreach (var res in selectedResources)
+                {
+                    filter.ResourceTitles.Add(res.Title);
+                }
+            }
+        }
+        if (selectedUnits != null)
+        {
+            if (selectedUnits.Count() > 0)
+            {                
+                foreach (var unit in selectedUnits)
+                {
+                    filter.UnitTitles.Add(unit.Title);
+                }
+            }
+        }     
+        var responce = await Http.PostAsJsonAsync("api/balances/filter", filter);
+        balances = responce.Content.ReadFromJsonAsync<IEnumerable<BalanceDto>>().Result.AsQueryable();
+    }
+
+    private async Task GetData()
+    {                   
+        var items = await Http.GetFromJsonAsync<IEnumerable<BalanceDto>>("api/balances");
+
+        balances = items?.AsQueryable().OrderBy(x => x.Id);
+
+        resources = await Http.GetFromJsonAsync<IEnumerable<ResourceDto>>($"api/resources");
+        units = await Http.GetFromJsonAsync<IEnumerable<UnitDto>>($"api/units");
+    }    
+
+    private async Task OnResourcesSearchAsync(OptionsSearchEventArgs<ResourceDto> e)
+    {       
+        e.Items = resources.Where(i => i.Title.StartsWith(e.Text, StringComparison.OrdinalIgnoreCase))
+                              .OrderBy(i => i.Title);
+    }
+
+    private async Task OnUnitsSearchAsync(OptionsSearchEventArgs<UnitDto> e)
+    {
+        e.Items = units.Where(i => i.Title.StartsWith(e.Text, StringComparison.OrdinalIgnoreCase))
+                              .OrderBy(i => i.Title);
+    }
 }

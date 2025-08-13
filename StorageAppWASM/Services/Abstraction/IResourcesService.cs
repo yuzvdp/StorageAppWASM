@@ -4,9 +4,11 @@ namespace StorageAppWASM.Services.Abstraction
 {
     public interface IResourcesService
     {
-        Task<IEnumerable<ResourceDto>> GetResourcesAsync();
+        Task<IEnumerable<ResourceDto>> GetAllAsync();
+        Task<IEnumerable<ResourceDto>> GetAllIsActiveAsync(bool b);
+
         Task AddAsync(ResourceInsertDto resourceInsertDto);
-        Task<ResourceDto> GetById(int id);
-        Task Update(ResourceDto resourceDto);
+        Task<ResourceDto> GetByIdAsync(int id);
+        Task UpdateAsync(ResourceDto resourceDto);
     }
 }

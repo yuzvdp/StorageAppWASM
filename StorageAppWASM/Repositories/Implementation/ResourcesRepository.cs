@@ -12,21 +12,21 @@ namespace StorageAppWASM.Repositories.Implementation
         {
             _dbFactory = dbFactory;
         }
-        public async Task<IEnumerable<Resource>> GetAll()
+        public async Task<IEnumerable<Resource>> GetAllAsync()
         {
-            var db = _dbFactory.CreateDbContext();
+            var db = await _dbFactory.CreateDbContextAsync();
             return await db.Resources.ToListAsync();
         }
 
-        public async Task<Resource> GetById(int Id)
+        public async Task<Resource> GetByIdAsync(int Id)
         {
-            var db = _dbFactory.CreateDbContext();
+            var db = await _dbFactory.CreateDbContextAsync();
             return await db.Resources.FirstOrDefaultAsync(p => p.Id == Id);
         }
 
-        public async Task<Resource> Add(Resource resource)
+        public async Task<Resource> AddAsync(Resource resource)
         {
-            var db = _dbFactory.CreateDbContext();
+            var db = await _dbFactory.CreateDbContextAsync();
 
             Resource newResource = new()
             {
@@ -45,9 +45,9 @@ namespace StorageAppWASM.Repositories.Implementation
             return await Task.FromResult(newResource);
         }
 
-        public async Task Update(Resource resource)
+        public async Task UpdateAsync(Resource resource)
         {
-            var db = _dbFactory.CreateDbContext();
+            var db = await _dbFactory.CreateDbContextAsync();
 
             var item = await db.Resources.FirstOrDefaultAsync(p => p.Id == resource.Id);
 
@@ -57,6 +57,12 @@ namespace StorageAppWASM.Repositories.Implementation
             item.IsActive = resource.IsActive;
 
             await db.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<Resource>> GetAllIsActiveAsync(bool b)
+        {
+            var db = await _dbFactory.CreateDbContextAsync();
+            return await db.Resources.Where(p => p.IsActive == b).ToListAsync();
         }
     }
 }

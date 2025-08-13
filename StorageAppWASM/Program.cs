@@ -24,6 +24,15 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IResourcesRepository, ResourcesRepository>();
 builder.Services.AddScoped<IResourcesService, ResourcesService>();
 
+builder.Services.AddScoped<IUnitsRepository, UnitsRepository>();
+builder.Services.AddScoped<IUnitsService, UnitsService>();
+
+builder.Services.AddScoped<IBalancesRepository, BalancesRepository>();
+builder.Services.AddScoped<IBalancesService, BalancesService>();
+
+builder.Services.AddScoped<IDocumentsIncomeRepository, DocumentsIncomeRepository>();
+builder.Services.AddScoped<IDocumentsIncomeService, DocumentsIncomeService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

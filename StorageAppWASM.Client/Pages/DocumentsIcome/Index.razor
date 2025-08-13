@@ -1,0 +1,75 @@
+﻿@page "/incomes"
+@rendermode @(new InteractiveWebAssemblyRenderMode(false))
+
+@inject NavigationManager Nv
+@inject HttpClient Http
+@using ClassLibrary.Dto
+
+<h3>Поступления</h3>
+
+
+<button class="btn btn-sm btn-success m-1" onclick="@(() => Nv.NavigateTo("/incomes/add"))">Добавить</button>
+
+@if (docs != null)
+{
+    <table class="table table-sm table-hover table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <td>Номер</td>
+                <td>Дата</td>
+                <td>Ресурсы / ед. изм. / Количество</td>
+                <td>Действия</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doc in docs)
+            {
+                <tr>
+                    <td>@doc.Number</td>
+                    <td>@doc.Date</td>
+                    <td>
+                        @if(doc.DocumentIncomeRowDtos != null)
+                        {
+                            foreach (var row in doc.DocumentIncomeRowDtos)
+                            {
+                                <div>@row.ResourceTitle: @row.Count, @row.UnitTitle</div>
+                            }
+                        }
+                    </td>
+                    <td><button class="btn btn-sm btn-danger" @onclick=@( async () => await Remove(doc.Id))>Удалить</button></td>
+                </tr> 
+            }
+
+        </tbody>
+    </table>
+}
+else
+{
+    <div>Загрузка...</div>
+}
+
+@code {
+    private IEnumerable<DocumentIncomeDto>? docs;
+
+
+    protected override async Task OnInitializedAsync()
+    {        
+        await GetData();
+    }
+
+    private async Task GetData()
+    {                 
+        docs = await Http.GetFromJsonAsync<IEnumerable<DocumentIncomeDto>>("api/documentsincome");        
+    }
+
+    private void HandleCellClick(FluentDataGridCell<DocumentIncomeDto> cell)
+    {       
+        Nv.NavigateTo($"/documentsincome/edit/{cell?.Item?.Id}");
+    }
+
+    private async Task Remove(int id)
+    {
+        await Http.DeleteAsync($"api/documentsincome/{id}");
+        await GetData();        
+    }
+}

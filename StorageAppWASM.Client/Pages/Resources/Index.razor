@@ -5,57 +5,79 @@
 @inject HttpClient Http
 @using ClassLibrary.Dto
 
-
 <h3>Ресурсы</h3>
 
-<FluentButton OnClick="SimulateDataLoading">Загрузить данные</FluentButton>
 <FluentButton OnClick=@(() => Nv.NavigateTo("/resources/add"))>Добавить</FluentButton>
+<FluentButton OnClick=@(async () => await ShowActive(IsActive))>@((IsActive) ? "Показать архив" : "Показать активные")</FluentButton>
+<FluentButton OnClick=@(async () => await GetAll())>Показать все</FluentButton>
 
-<div style="height: 400px; max-width: 800px; overflow-y: scroll;">
-    <FluentDataGrid Items="@resources" Virtualize="true" @ref="grid" Loading="@(resources == null)" TGridItem="ResourceDto" OnCellClick="@HandleCellClick">
-        <ChildContent>
-            <PropertyColumn Property="@(p => p.Title)" Title="Наименование" Sortable="true" />
-            <PropertyColumn Property="@(p => p.IsActive)" Sortable="true" />
-        </ChildContent>    
-        <LoadingContent>
-            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
-                Загрузка...<br />
-                <FluentProgress Width="150px" />
-            </FluentStack>
-        </LoadingContent>
-    </FluentDataGrid>
-</div>
+@if (resources != null)
+{
+    <div class="w-50 mt-2">
+        <table class="table table-sm table-hover table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <td>Наименование</td>
+                    <td>Статус</td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var resource in resources)
+                {
+                    <tr @onclick=@(() => HandleCellClick(resource.Id)) data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                        <td>@resource.Title</td>
+                        <td>
+                            @if (resource.IsActive)
+                            {
+                                <span class="badge bg-success">Активный</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">В архиве</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div>Загрузка...</div>
+}
 
 
 @code {
     private IQueryable<ResourceDto>? resources;
     FluentDataGrid<ResourceDto>? grid;
+    private bool IsActive = true;
 
     protected override async Task OnInitializedAsync()
     {        
-        await SimulateDataLoading();
+        await GetData(true);
     }
 
-    private async Task SimulateDataLoading()
-    {        
-        resources = null;
-
-        grid?.SetLoadingState(true);
-
-        //await Task.Delay(500);
-
-        var items = await Http.GetFromJsonAsync<IEnumerable<ResourceDto>>("api/resources");
-
+    private async Task GetData(bool b)
+    {
+        var items = await Http.GetFromJsonAsync<IEnumerable<ResourceDto>>($"api/resources/{IsActive}");
         resources = items?.AsQueryable().OrderBy(x => x.Id);
-
-        grid?.SetLoadingState(false);
     }
 
-    private void HandleCellClick(FluentDataGridCell<ResourceDto> cell)
+    private async Task GetAll()
+    {
+        var items = await Http.GetFromJsonAsync<IEnumerable<ResourceDto>>($"api/resources");
+        resources = items?.AsQueryable().OrderBy(x => x.Id);
+    }
+
+    private async Task ShowActive(bool b)
+    {
+        IsActive = !IsActive;
+        await GetData(b);        
+    }
+
+    private void HandleCellClick(int id)
     {       
-        Nv.NavigateTo($"/resources/edit/{cell.Item.Id}");
-        // Access the clicked item: args.Item
-        // Access the clicked column: args.GridColumn
-        // Perform actions based on the clicked cell/row
+        Nv.NavigateTo($"/resources/edit/{id}");        
     }
 }
